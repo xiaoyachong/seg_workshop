@@ -15,7 +15,7 @@ import lightly_train
 DATASET = sys.argv[1] if len(sys.argv) > 1 else "sample_dataset"
 
 ROOT = Path(DATASET)
-STEPS = 10000
+STEPS = 5000
 IGNORE = 255  # unannotated pixels; excluded from the loss
 
 
