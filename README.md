@@ -66,6 +66,19 @@ Reads `classes.json` for the class table and `manifest.json` for `ignore_index`,
 Edit at the top of `finetune.py`: `STEPS`, and the `model` / `batch_size` / `devices` arguments.
 Uncomment `resume_interrupted=True` to continue a stopped run.
 
+### On a SLURM cluster
+
+```bash
+sbatch submit.sh sample_dataset
+```
+
+Single node, single GPU. The dataset name is the only argument; `submit.sh` checks that
+`sample_dataset/classes.json` exists before burning an allocation, creates `logs/`, and writes
+job output to `logs/job_<jobid>.out`.
+
+Set the conda environment with `CONDA_ENV=/path/to/env sbatch submit.sh sample_dataset`, and edit
+the `#SBATCH` header for account, walltime, and queue.
+
 ## Inference
 
 ```bash
@@ -97,6 +110,7 @@ sharing one name across two ids.
 | file | purpose |
 | --- | --- |
 | `finetune.py` | train a segmentation model on a dataset folder |
+| `submit.sh` | SLURM wrapper around `finetune.py` (1 node, 1 GPU) |
 | `inference.py` | run a trained checkpoint over the test split, save overlays |
 | `view_image_mask_pairs.ipynb` | visualize pairs and inspect mask label values |
 | `requirements.txt` | pinned dependencies |
