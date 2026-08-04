@@ -16,6 +16,7 @@ cd seg_workshop
 Create the environment and install the dependencies:
 
 ```bash
+module load conda
 conda create -n dino_demo python==3.12
 conda activate dino_demo
 pip install -r requirements.txt
