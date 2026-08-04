@@ -112,6 +112,21 @@ to `out_sample_dataset/inference/<name>_overlay.png`.
 Set `CKPT_PATH` at the top of the script to use a specific checkpoint instead, or `ALPHA` to change
 the overlay opacity.
 
+### In a notebook
+
+`inference.ipynb` does the same thing interactively. Set `DATA_DIR` and `CKPT_PATH` in the first cell (no auto-discovery), then run the remaining.
+
+To use it on NERSC, register the conda environment as a Jupyter kernel once:
+
+```bash
+conda activate dino_demo
+pip install ipykernel
+python -m ipykernel install --user --name dino_demo --display-name "dino_demo"
+```
+
+Then open the notebook at [jupyter.nersc.gov](https://jupyter.nersc.gov) and pick the **dino_demo**
+kernel.
+
 ## Inspect a dataset first
 
 `view_image_mask_pairs.ipynb` is a three-cell notebook for sanity-checking an export before
@@ -133,5 +148,6 @@ sharing one name across two ids.
 | `finetune.py` | train a segmentation model on a dataset folder |
 | `submit.sh` | SLURM wrapper around `finetune.py` (1 node, 1 GPU) |
 | `inference.py` | run a trained checkpoint over the test split, save overlays |
+| `inference.ipynb` | same, interactively — plots inline, nothing saved |
 | `view_image_mask_pairs.ipynb` | visualize pairs and inspect mask label values |
 | `requirements.txt` | pinned dependencies |
