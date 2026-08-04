@@ -9,6 +9,7 @@ os.environ["LIGHTLY_TRAIN_CACHE_DIR"] = ".cache"
 os.environ["LIGHTLY_TRAIN_MODEL_CACHE_DIR"] = ".cache"
 os.environ["TORCH_HOME"] = ".cache"
 
+import colorsys
 import json
 import sys
 from pathlib import Path
@@ -29,30 +30,30 @@ ALPHA = 0.45
 CKPT_PATH = None                          # set to a path to skip auto-discovery
 
 Image.MAX_IMAGE_PIXELS = None
-FALLBACK = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f"]
-IGNORE_COLOR = "#ff00ff"
+IGNORE = 255              # unannotated pixels; drawn transparent
+IGNORE_COLOR = (255, 0, 255)
+
+
+def auto_color(n: int):
+    """A distinct color per class index, for any number of classes."""
+    if n < 20:
+        return [int(c * 255) for c in plt.get_cmap("tab20")(n)[:3]]
+    r, g, b = colorsys.hsv_to_rgb((n * 0.618033988749895) % 1.0, 0.65, 0.95)
+    return [int(r * 255), int(g * 255), int(b * 255)]
 
 
 # --- dataset ---------------------------------------------------------------
 # classes.json maps id -> label, and those ids are what the mask pixels hold.
-# manifest.json supplies the colors, but its classId can be offset from those
-# ids, so the two are joined on the label string rather than the number.
+# Colors are assigned here rather than read from the export, so labels that
+# repeat (0 and 1 both "background") still get distinguishable shades.
 CLASSES = {int(k): v for k, v in json.loads((ROOT / "classes.json").read_text()).items()}
-manifest = json.loads((ROOT / "manifest.json").read_text()) if (ROOT / "manifest.json").is_file() else {}
-COLORS = {c["label"].lower(): c["color"] for c in manifest.get("classes", [])}
-IGNORE = manifest.get("ignore_index")
 
-# Labels repeat in some exports (0 and 1 both "background"); give duplicates
-# distinct shades so they stay tellable apart.
-seen, PALETTE = {}, np.zeros((256, 3), dtype=np.uint8)
+# Built once and indexed by class id, so a class keeps the same color in every
+# figure -- never derive colors from whatever happens to appear in one image.
+PALETTE = np.zeros((256, 3), dtype=np.uint8)
 for n, i in enumerate(sorted(CLASSES)):
-    key = CLASSES[i].lower()
-    seen[key] = seen.get(key, 0) + 1
-    hex_color = COLORS.get(key) if seen[key] == 1 else None
-    hex_color = hex_color or FALLBACK[n % len(FALLBACK)]
-    PALETTE[i] = [int(hex_color.lstrip("#")[j : j + 2], 16) for j in (0, 2, 4)]
-if IGNORE is not None:
-    PALETTE[int(IGNORE)] = [int(IGNORE_COLOR.lstrip("#")[j : j + 2], 16) for j in (0, 2, 4)]
+    PALETTE[i] = auto_color(n)
+PALETTE[IGNORE] = IGNORE_COLOR
 
 name = lambda i: "ignore/unannotated" if i == IGNORE else CLASSES.get(int(i), f"UNDECLARED {i}")
 
@@ -94,6 +95,9 @@ if __name__ == "__main__":
     print(f"dataset    : {ROOT}  ({TEST.name} split, {len(images)} images)")
     print(f"checkpoint : {ckpt}")
     print(f"saving to  : {SAVE_DIR}")
+    print("colors     : fixed for every image")
+    for i in sorted(CLASSES) + [IGNORE]:
+        print("               {:>3}  {:<28} #{:02x}{:02x}{:02x}".format(i, name(i), *PALETTE[i]))
 
     model = lightly_train.load_model_from_checkpoint(ckpt)
 
@@ -117,8 +121,7 @@ if __name__ == "__main__":
             if overlay is not None:
                 # RGBA so ignore pixels can be fully transparent, everything else ALPHA
                 rgba = np.dstack([PALETTE[overlay], np.full(overlay.shape, int(255 * ALPHA), np.uint8)])
-                if IGNORE is not None:
-                    rgba[..., 3][overlay == IGNORE] = 0
+                rgba[..., 3][overlay == IGNORE] = 0
                 ax.imshow(rgba, interpolation="nearest")
             ax.set_title(title)
             ax.axis("off")

@@ -18,7 +18,6 @@ Point the scripts at an exported dataset folder — `sample_dataset` in the exam
 ```
 sample_dataset/
 ├── classes.json        # {"0": "air", "1": "xylem", ...}  id -> label
-├── manifest.json       # class colors, annotator, and (newer exports) "ignore_index"
 ├── train/
 │   ├── images/         # xxx_0000.png, xxx_0001.png, ...
 │   └── masks/          # same filenames as images/
@@ -42,16 +41,37 @@ Both scripts pick a split by falling back through a list, so either `val` or `te
 
 ### Class ids and unannotated pixels
 
-Two details differ between exports, and both scripts read them rather than assume:
+**`255` means unannotated.** Those pixels were never painted, are excluded from the loss, and are
+deliberately absent from `classes.json`. Every script hardcodes this, so no manifest is required.
 
-- **Colors join on the label, not the id.** `classes.json` ids are what the mask pixels contain,
-  but `manifest.json`'s `classId` can be offset from them (in one export `classes.json` starts at
-  `0: air` while `manifest.json` starts at `1: air`). Joining on the number silently mislabels
-  every class.
-- **`ignore_index` marks unannotated pixels.** Newer exports declare `"ignore_index": 255` in
-  `manifest.json`; those pixels were never painted and are excluded from the loss. Older exports
-  have no such value, so unpainted pixels fall through to id `0` and cannot be distinguished from
-  real background — worth checking before you train.
+**`classes.json` is the only metadata read.** Nothing reads `manifest.json` — it may sit in the
+folder, but its `classId` values can be offset from the ids in the mask pixels, so trusting it
+would mislabel classes. Overlay colors are assigned from a `tab20` palette by class index instead,
+which also keeps repeated labels distinguishable.
+
+## Merge several datasets
+
+```bash
+python merge_datasets.py rock earth plant -o combined
+```
+
+Combines same-structure folders into one dataset you can train on directly. Files are copied as
+`<folder>_<filename>` so names can't collide, and every class gets a new global id labelled
+`<folder>_<classname>` — `rock_background`, `plant_xylem`, and so on. Labels are copied verbatim
+apart from the prefix, so a folder that declares the same label twice keeps both; they simply get
+separate global ids. Classes are never fused across datasets, even when they share a name.
+
+Mask pixels are remapped through a lookup table into the global id space. `255` is the ignore value
+in every input and stays `255` in the output. Values found in a mask but declared nowhere are sent
+to ignore with a warning.
+
+The output carries its own `classes.json`, so `finetune.py`, `inference.py`, and the notebook all
+read it like any single export:
+
+```bash
+python merge_datasets.py rock earth plant -o combined
+python finetune.py combined
+```
 
 ## Train
 
@@ -59,8 +79,8 @@ Two details differ between exports, and both scripts read them rather than assum
 python finetune.py sample_dataset
 ```
 
-Reads `classes.json` for the class table and `manifest.json` for `ignore_index`, then trains on
-`sample_dataset/train` with `sample_dataset/val` for validation. Checkpoints land in
+Reads `classes.json` for the class table, then trains on `sample_dataset/train` with
+`sample_dataset/val` for validation, passing `ignore_classes=[255]`. Checkpoints land in
 `out_sample_dataset/vits16-eomt-cityscapes/`.
 
 Edit at the top of `finetune.py`: `STEPS`, and the `model` / `batch_size` / `devices` arguments.
@@ -109,6 +129,7 @@ sharing one name across two ids.
 
 | file | purpose |
 | --- | --- |
+| `merge_datasets.py` | combine several dataset folders into one global label space |
 | `finetune.py` | train a segmentation model on a dataset folder |
 | `submit.sh` | SLURM wrapper around `finetune.py` (1 node, 1 GPU) |
 | `inference.py` | run a trained checkpoint over the test split, save overlays |

@@ -10,32 +10,25 @@ from pathlib import Path
 
 import lightly_train
 
-# Dataset folder: holds classes.json, manifest.json and train/ + val/ (or test/).
+# Dataset folder: holds classes.json and train/ + val/ (or test/).
 # Override from the command line:  python finetune.py sample_dataset
 DATASET = sys.argv[1] if len(sys.argv) > 1 else "sample_dataset"
 
 ROOT = Path(DATASET)
 STEPS = 10000
+IGNORE = 255  # unannotated pixels; excluded from the loss
 
 
 def load_classes(root: Path):
-    """Read the class table and ignore value straight from the export.
+    """Read the class table from the export.
 
     classes.json maps id -> label, and those ids are what the mask pixels contain.
-    manifest.json may declare an ignore_index (255 in newer exports) marking pixels
-    the annotator never painted; older exports have no such value.
+    255 marks pixels the annotator never painted; it is excluded from the loss and
+    is deliberately absent from classes.json.
     """
     classes = {int(k): v for k, v in json.loads((root / "classes.json").read_text()).items()}
-
-    ignore = None
-    manifest_path = root / "manifest.json"
-    if manifest_path.is_file():
-        ignore = json.loads(manifest_path.read_text()).get("ignore_index")
-
-    if ignore is not None:
-        classes[int(ignore)] = classes.get(int(ignore), "unknown")
-
-    return classes, ([int(ignore)] if ignore is not None else [])
+    classes[IGNORE] = classes.get(IGNORE, "unknown")
+    return classes, [IGNORE]
 
 
 def split_dir(root: Path, names) -> Path:
