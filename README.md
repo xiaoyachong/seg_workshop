@@ -135,23 +135,3 @@ pair, then print the distinct values in each mask with per-class pixel counts.
 Use it to catch the common problems: masks that are mostly `ignore` (partially annotated slices),
 class ids present in the pixels but not declared in `classes.json`, and duplicate labels sharing one
 name across two ids.
-
-## Merge several datasets
-
-```bash
-python merge_datasets.py rock earth plant -o combined
-```
-
-Files are copied as `<folder>_<filename>` so names can't collide, and every class gets a new global
-id labelled `<folder>_<classname>` — `rock_background`, `plant_xylem`. Labels are copied verbatim
-apart from the prefix, so a folder declaring the same label twice keeps both with separate ids.
-Classes are never fused across datasets, even when they share a name.
-
-Mask pixels are remapped through a lookup table into the global id space; `255` stays `255`. Values
-found in a mask but declared nowhere are sent to ignore with a warning. The output carries its own
-`classes.json`, so it trains like any single export:
-
-```bash
-python merge_datasets.py rock earth plant -o combined
-python finetune.py combined
-```

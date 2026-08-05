@@ -1,10 +1,11 @@
 .DS_Store
-D_A___e_rec20260221_135217_petiole22_20260717_175256/
-e_rec20260221_135217_petiole22_20260730_163209/
-SH__dataset_1_sh089_slice1900_2000_20260803_220056/
-sophie4/
+Annotations/
+Annotations_processed/
+__MACOSX/
+data/
 out*/
 logs*/
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

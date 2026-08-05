@@ -15,7 +15,7 @@ import lightly_train
 DATASET = sys.argv[1] if len(sys.argv) > 1 else "sample_dataset"
 
 ROOT = Path(DATASET)
-STEPS = 5000
+STEPS = 20000
 IGNORE = 255  # unannotated pixels; excluded from the loss
 
 
@@ -49,12 +49,12 @@ if __name__ == "__main__":
     print(f"ignore_classes: {IGNORE_CLASSES}")
 
     lightly_train.train_semantic_segmentation(
-        out=f"out_{ROOT.name}/vits16-eomt-cityscapes",
+        out=f"out_{ROOT.name}/vits16-eomt-cityscapes-20k-batch4",
         model="dinov3/vits16-eomt-cityscapes",
         steps=STEPS,
         devices=1,
         num_nodes=1,
-        batch_size=1,
+        batch_size=4,
         data={
             "train": {
                 "images": str(TRAIN / "images"),

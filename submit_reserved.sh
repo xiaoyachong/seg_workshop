@@ -4,7 +4,7 @@
 #SBATCH --reservation=_CAP_als_annotation_workshop
 #SBATCH -N 1
 #SBATCH -C "gpu&hbm80g"
-#SBATCH --time=01:00:00
+#SBATCH --time=10:00:00
 #SBATCH --ntasks-per-node=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=32
