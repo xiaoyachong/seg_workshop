@@ -5,6 +5,7 @@ __MACOSX/
 data/
 out*/
 logs*/
+checkpoints/
 *.zip
 
 # Byte-compiled / optimized / DLL files

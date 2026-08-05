@@ -42,8 +42,8 @@ Two cells:
    image, inline. Nothing is saved to disk.
 
 ```python
-DATA_DIR  = "../sample_dataset"
-CKPT_PATH = "../out_sample_dataset/vits16-eomt-cityscapes/checkpoints/best.ckpt"
+DATA_DIR  = "../data/combined"  
+CKPT_PATH = "../checkpoints/combined_vits16-eomt-cityscapes-20k.ckpt"
 ```
 
 That's it — everything below is optional.
