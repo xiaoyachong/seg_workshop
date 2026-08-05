@@ -43,7 +43,7 @@ Two cells:
 
 ```python
 DATA_DIR  = "../data/combined"  
-CKPT_PATH = "../checkpoints/combined_vits16-eomt-cityscapes-20k.ckpt"
+CKPT_PATH = "../checkpoints/combined_vits16-eomt-cityscapes-20k-batch4.ckpt"
 ```
 
 That's it — everything below is optional.
